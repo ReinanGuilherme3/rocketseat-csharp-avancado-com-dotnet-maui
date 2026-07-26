@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using FluentMigrator.Runner;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PlanShare.Domain.Repositories;
@@ -15,8 +16,10 @@ using PlanShare.Infrastructure.Security.Cryptography;
 using PlanShare.Infrastructure.Security.Tokens.Access.Generator;
 using PlanShare.Infrastructure.Security.Tokens.Access.Validator;
 using PlanShare.Infrastructure.Services.LoggedUser;
+using System.Reflection;
 
 namespace PlanShare.Infrastructure;
+
 public static class DependencyInjectionExtension
 {
     public static void AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
@@ -26,15 +29,18 @@ public static class DependencyInjectionExtension
         AddTokenHandlers(services, configuration);
         AddPasswordEncripter(services);
         AddDbContext(services, configuration);
+        AddFluentMigrator(services, configuration);
     }
 
-    private static void AddDbContext(IServiceCollection services, IConfiguration configuration)
+    private static void AddDbContext(
+    IServiceCollection services,
+    IConfiguration configuration)
     {
         var connectionString = configuration.ConnectionString();
 
-        services.AddDbContext<PlanShareDbContext>(dbContextOptions =>
+        services.AddDbContext<PlanShareDbContext>(options =>
         {
-            dbContextOptions.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+            options.UseSqlServer(connectionString);
         });
     }
 
@@ -67,5 +73,20 @@ public static class DependencyInjectionExtension
 
         services.AddScoped<IAccessTokenValidator>(option => new JwtTokenValidator(signingKey));
         services.AddScoped<IAccessTokenGenerator>(option => new JwtTokenGenerator(expirationTimeMinutes, signingKey));
+    }
+
+    private static void AddFluentMigrator(IServiceCollection services, IConfiguration configuration)
+    {
+        var connectionString = configuration.ConnectionString();
+        services.AddFluentMigratorCore()
+                .ConfigureRunner(config =>
+                {
+                    var infrastructure = Assembly.Load("PlanShare.Infrastructure");
+                    var migrationRunnerBuilder = config.AddSqlServer();
+                    migrationRunnerBuilder
+                    .WithGlobalConnectionString(connectionString)
+                    .ScanIn(infrastructure)
+                    .For.All();
+                });
     }
 }
