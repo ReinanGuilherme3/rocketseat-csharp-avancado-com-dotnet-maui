@@ -10,15 +10,16 @@
 
         <Label
             FontSize="18"
+            FontFamily="RalewayBlack"
             HorizontalOptions="Center"
             Text="Tarefas pequenas, grandes resultados." />
 
         <Label FontSize="18" HorizontalOptions="Center">
             <Label.FormattedText>
                 <FormattedString>
-                    <Span Text="Não tem uma conta?" />
+                    <Span Text="Não tem uma conta?" FontFamily="WorkSansRefular" />
                     <Span Text=" " />
-                    <Span Text="Crie a sua conta!" TextColor="#0065f2" />
+                    <Span Text="Crie a sua conta!" FontFamily="WorkSansBlack" TextColor="#0065f2" />
                 </FormattedString>
             </Label.FormattedText>
         </Label>
